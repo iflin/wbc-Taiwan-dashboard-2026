@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WBC 2026 台灣隊預賽 C 組 — 成績與進階數據分析</title>
+    <meta
+      name="description"
+      content="2026 世界棒球經典賽台灣隊預賽 C 組完整成績、打擊投球進階 Statcast 數據分析與視覺化儀表板"
+    />
+    <link rel="stylesheet" href="src/styles.css?v=3" />
+  </head>
+  <body>
+    <!-- ========== 頁首 ========== -->
+    <header class="site-header">
+      <div class="header-inner">
+        <div class="site-logo">
+          <span class="logo-icon">🇹🇼</span>
+          <div>
+            <h1>WBC 2026 台灣隊</h1>
+            <div class="subtitle">預賽 C 組 ・ 成績與進階數據分析</div>
+          </div>
+        </div>
+        <nav class="tab-nav">
+          <button
+            class="tab-btn active"
+            data-tab="page-overview"
+            id="tab-overview"
+          >
+            🏆 賽事總覽
+          </button>
+          <button class="tab-btn" data-tab="page-batting" id="tab-batting">
+            🏏 打擊分析
+          </button>
+          <button class="tab-btn" data-tab="page-pitching" id="tab-pitching">
+            ⚾ 投球分析
+          </button>
+          <button
+            class="tab-btn"
+            data-tab="page-comparison"
+            id="tab-comparison"
+          >
+            📊 對戰比較
+          </button>
+        </nav>
+      </div>
+    </header>
+
+    <!-- ========== 載入畫面 ========== -->
+    <div id="loading" class="loading-container">
+      <div class="loading-spinner"></div>
+      <div class="loading-text">正在載入比賽資料與計算進階指標...</div>
+    </div>
+
+    <!-- ========== 主內容區 ========== -->
+    <main id="app-content" class="main-content" style="display: none">
+      <!-- ===== P1：賽事總覽 ===== -->
+      <section id="page-overview" class="page-section active">
+        <div class="section-title">
+          <span class="icon">🏆</span> 預賽 C 組戰績
+        </div>
+
+        <!-- 戰績表 -->
+        <div class="card" style="margin-bottom: var(--space-2xl)">
+          <div class="standings-table-wrapper">
+            <table class="standings-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>隊伍</th>
+                  <th>勝</th>
+                  <th>敗</th>
+                  <th>勝率</th>
+                  <th>賽</th>
+                  <th>得分</th>
+                  <th>失分</th>
+                  <th>得失分差</th>
+                </tr>
+              </thead>
+              <tbody id="standings-table-body"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 各場比賽卡片 -->
+        <div class="section-title">
+          <span class="icon">📋</span> 台灣隊各場比賽
+        </div>
+        <div class="game-cards-grid" id="game-cards-container"></div>
+      </section>
+
+      <!-- ===== P2：打擊分析 ===== -->
+      <section id="page-batting" class="page-section">
+        <div class="section-title">
+          <span class="icon">🏏</span> 打擊數據分析
+        </div>
+
+        <!-- 打擊 KPIs -->
+        <div class="kpi-grid" id="batting-kpis"></div>
+
+        <!-- 打者成績表 -->
+        <div class="card" style="margin-bottom: var(--space-xl)">
+          <div class="card-header">
+            <div class="card-title">打者累積成績表</div>
+          </div>
+          <div class="stats-table-wrapper">
+            <table class="stats-table">
+              <thead>
+                <tr>
+                  <th>打者</th>
+                  <th>PA</th>
+                  <th>AB</th>
+                  <th>H</th>
+                  <th>2B</th>
+                  <th>3B</th>
+                  <th>HR</th>
+                  <th>RBI</th>
+                  <th>BB</th>
+                  <th>SO</th>
+                  <th>AVG</th>
+                  <th>OBP</th>
+                  <th>SLG</th>
+                  <th>OPS</th>
+                  <th>Avg EV</th>
+                  <th>Hard%</th>
+                  <th>P/PA</th>
+                </tr>
+              </thead>
+              <tbody id="batting-table-body"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 擊球品質圖表 -->
+        <div class="charts-grid">
+          <div class="chart-container">
+            <div class="chart-title">
+              📈 擊球品質散布圖 — Exit Velocity × Launch Angle
+            </div>
+            <div class="chart-subtitle">
+              每個點代表一次擊球進場，顏色依結果分類。金色區域為 Barrel
+              Zone（最佳擊球品質）
+            </div>
+            <div id="ev-la-chart" style="min-height: 400px"></div>
+          </div>
+          <div class="chart-container">
+            <div class="chart-title">📊 擊球仰角帶分布</div>
+            <div class="chart-subtitle">
+              各打者的滾地球(GB)、平飛球(LD)、飛球(FB)、內飛球(PU)比例
+            </div>
+            <div id="la-distribution-chart" style="min-height: 400px"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== P3：投球分析 ===== -->
+      <section id="page-pitching" class="page-section">
+        <div class="section-title">
+          <span class="icon">⚾</span> 投球數據分析
+        </div>
+
+        <!-- 投球 KPIs -->
+        <div class="kpi-grid" id="pitching-kpis"></div>
+
+        <!-- 投手成績表 -->
+        <div class="card" style="margin-bottom: var(--space-xl)">
+          <div class="card-header">
+            <div class="card-title">投手累積成績表</div>
+          </div>
+          <div class="stats-table-wrapper">
+            <table class="stats-table">
+              <thead>
+                <tr>
+                  <th>投手</th>
+                  <th>IP</th>
+                  <th>投球數</th>
+                  <th>K</th>
+                  <th>BB</th>
+                  <th>H</th>
+                  <th>均速</th>
+                  <th>最快</th>
+                  <th>好球%</th>
+                  <th>P/IP</th>
+                  <th>首球K%</th>
+                  <th>主要球種</th>
+                </tr>
+              </thead>
+              <tbody id="pitching-table-body"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 投手選擇器 -->
+        <div class="controls-bar">
+          <span class="filter-label">選擇投手：</span>
+          <select id="pitcher-select" class="filter-select"></select>
+          <span
+            id="selected-pitcher-name"
+            style="
+              font-weight: 700;
+              font-size: 1.1rem;
+              color: var(--accent-gold);
+            "
+          ></span>
+        </div>
+
+        <!-- 球種分布 -->
+        <div class="card" style="margin-bottom: var(--space-lg)">
+          <div class="card-title">球種配比分布</div>
+          <div
+            id="pitch-mix-container"
+            style="margin-top: var(--space-md)"
+          ></div>
+        </div>
+
+        <!-- 球種統計表 -->
+        <div class="card" style="margin-bottom: var(--space-lg)">
+          <div class="card-title">球種詳細統計</div>
+          <div class="stats-table-wrapper" style="margin-top: var(--space-md)">
+            <table class="stats-table">
+              <thead>
+                <tr>
+                  <th>球種</th>
+                  <th>球數</th>
+                  <th>比例</th>
+                  <th>均速</th>
+                  <th>最快</th>
+                  <th>轉速</th>
+                  <th>水平位移</th>
+                  <th>垂直位移</th>
+                </tr>
+              </thead>
+              <tbody id="pitch-type-table-body"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 投球圖表 -->
+        <div class="charts-grid">
+          <div class="chart-container">
+            <div class="chart-title">🎯 投球位移圖 — Movement Chart</div>
+            <div class="chart-subtitle">
+              各球種在水平與垂直方向的位移差異，顏色依球種分類
+            </div>
+            <div id="movement-chart" style="min-height: 400px"></div>
+          </div>
+          <div class="chart-container">
+            <div class="chart-title">📍 好球帶進壘圖 — Strike Zone</div>
+            <div class="chart-subtitle">捕手視角，白框為好球帶邊界</div>
+            <div id="strike-zone-chart" style="min-height: 420px"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== P4：對戰比較 ===== -->
+      <section id="page-comparison" class="page-section">
+        <div id="comparison-content"></div>
+      </section>
+    </main>
+
+    <!-- ========== 頁尾 ========== -->
+    <footer class="site-footer">
+      <p>WBC 2026 台灣隊預賽 C 組數據分析 ・ 資料來源：MLB Statcast</p>
+      <p style="margin-top: 4px">逐球資料最後更新：2026-03-07</p>
+    </footer>
+
+    <!-- 應用程式腳本與第三方套件 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <script src="src/dataProcessor.js?v=3"></script>
+    <script src="src/charts.js?v=3"></script>
+    <script src="src/app.js?v=3"></script>
+  </body>
+</html>

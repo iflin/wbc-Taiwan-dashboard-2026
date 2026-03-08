@@ -1,0 +1,725 @@
+/* WBC 台灣隊 2026 預賽 C 組 — 設計系統 */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap");
+
+:root {
+  --bg-primary: #0a0e1a;
+  --bg-secondary: #111827;
+  --bg-card: #1a2035;
+  --bg-card-hover: #1f2847;
+  --bg-elevated: #243055;
+  --accent-gold: #f5c542;
+  --accent-red: #e63946;
+  --accent-blue: #3a86ff;
+  --accent-green: #06d6a0;
+  --accent-purple: #8338ec;
+  --accent-cyan: #00d4ff;
+  --text-primary: #f0f4ff;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --text-accent: #f5c542;
+  --gradient-gold: linear-gradient(135deg, #f5c542, #e8a317);
+  --gradient-hero: linear-gradient(
+    135deg,
+    #0a0e1a 0%,
+    #1a1040 40%,
+    #102040 100%
+  );
+  --gradient-card: linear-gradient(
+    145deg,
+    rgba(26, 32, 53, 0.9),
+    rgba(17, 24, 39, 0.95)
+  );
+  --gradient-accent: linear-gradient(135deg, #3a86ff, #8338ec);
+  --border-subtle: rgba(148, 163, 184, 0.12);
+  --border-hover: rgba(245, 197, 66, 0.3);
+  --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.3);
+  --shadow-elevated: 0 8px 40px rgba(0, 0, 0, 0.4);
+  --shadow-glow-gold: 0 0 20px rgba(245, 197, 66, 0.15);
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+  --space-3xl: 64px;
+  --transition-fast: 0.15s ease;
+  --transition-base: 0.25s ease;
+  --transition-slow: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+}
+body {
+  font-family: "Inter", "Noto Sans TC", sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.6;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* 頁首 */
+.site-header {
+  background: var(--gradient-hero);
+  border-bottom: 1px solid var(--border-subtle);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(12px);
+}
+.header-inner {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: var(--space-md) var(--space-lg);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.site-logo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+.site-logo .logo-icon {
+  font-size: 2rem;
+}
+.site-logo h1 {
+  font-size: 1.3rem;
+  font-weight: 800;
+  background: var(--gradient-gold);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.site-logo .subtitle {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-weight: 400;
+  margin-top: 2px;
+}
+
+/* 導覽列 */
+.tab-nav {
+  display: flex;
+  gap: var(--space-xs);
+  background: rgba(10, 14, 26, 0.5);
+  padding: var(--space-xs);
+  border-radius: var(--radius-lg);
+}
+.tab-btn {
+  padding: var(--space-sm) var(--space-md);
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  white-space: nowrap;
+}
+.tab-btn:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.06);
+}
+.tab-btn.active {
+  color: var(--bg-primary);
+  background: var(--gradient-gold);
+  font-weight: 700;
+  box-shadow: var(--shadow-glow-gold);
+}
+
+/* 主內容 */
+.main-content {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: var(--space-xl) var(--space-lg);
+}
+.page-section {
+  display: none;
+  animation: fadeInUp 0.5s ease forwards;
+}
+.page-section.active {
+  display: block;
+}
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 卡片 */
+.card {
+  background: var(--gradient-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  transition: all var(--transition-base);
+  box-shadow: var(--shadow-card);
+}
+.card:hover {
+  border-color: var(--border-hover);
+  box-shadow: var(--shadow-elevated);
+  transform: translateY(-2px);
+}
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-lg);
+}
+.card-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+.section-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  margin-bottom: var(--space-lg);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+.section-title .icon {
+  font-size: 1.8rem;
+}
+
+/* 比分卡片 */
+.game-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: var(--space-lg);
+  margin-bottom: var(--space-2xl);
+}
+.game-card {
+  background: var(--gradient-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transition: all var(--transition-base);
+}
+.game-card:hover {
+  border-color: var(--border-hover);
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-elevated);
+}
+.game-card.win {
+  border-left: 4px solid var(--accent-green);
+}
+.game-card.loss {
+  border-left: 4px solid var(--accent-red);
+}
+.game-card-header {
+  padding: var(--space-md) var(--space-lg);
+  background: rgba(255, 255, 255, 0.03);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+.game-card-body {
+  padding: var(--space-lg);
+}
+.game-score-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-sm) 0;
+}
+.team-info {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  flex: 1;
+}
+.team-flag {
+  font-size: 1.8rem;
+}
+.team-name {
+  font-size: 1rem;
+  font-weight: 600;
+}
+.team-name.highlight {
+  color: var(--accent-gold);
+}
+.score-value {
+  font-size: 2rem;
+  font-weight: 900;
+  min-width: 50px;
+  text-align: center;
+}
+.score-value.winner {
+  color: var(--accent-gold);
+}
+.score-value.loser {
+  color: var(--text-muted);
+}
+
+/* 各局比分 */
+.inning-scores {
+  margin-top: var(--space-md);
+  overflow-x: auto;
+}
+.inning-scores table {
+  width: 100%;
+  font-size: 0.75rem;
+  border-collapse: collapse;
+}
+.inning-scores th,
+.inning-scores td {
+  padding: 4px 6px;
+  text-align: center;
+  border: 1px solid var(--border-subtle);
+}
+.inning-scores th {
+  color: var(--text-muted);
+  font-weight: 500;
+  background: rgba(255, 255, 255, 0.02);
+}
+.inning-scores td {
+  color: var(--text-secondary);
+}
+.inning-scores td.score-highlight {
+  color: var(--accent-gold);
+  font-weight: 700;
+}
+.inning-scores .total-col {
+  background: rgba(245, 197, 66, 0.08);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* 戰績表 */
+.standings-table-wrapper {
+  overflow-x: auto;
+  margin-bottom: var(--space-2xl);
+}
+.standings-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+.standings-table th {
+  padding: var(--space-md);
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-bottom: 2px solid var(--border-subtle);
+}
+.standings-table td {
+  padding: var(--space-md);
+  border-bottom: 1px solid var(--border-subtle);
+  transition: background var(--transition-fast);
+}
+.standings-table tbody tr:hover td {
+  background: rgba(255, 255, 255, 0.03);
+}
+.standings-table .team-row-highlight td {
+  background: rgba(245, 197, 66, 0.06);
+}
+.standings-table .rank-num {
+  font-weight: 800;
+  font-size: 1.1rem;
+  color: var(--accent-gold);
+}
+.standings-table .team-cell {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-weight: 600;
+}
+.standings-table .record {
+  font-weight: 700;
+  font-size: 1rem;
+}
+.not-played {
+  color: var(--text-muted);
+  font-style: italic;
+  font-size: 0.8rem;
+}
+
+/* 統計表格 */
+.stats-table-wrapper {
+  overflow-x: auto;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+}
+.stats-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+  min-width: 700px;
+}
+.stats-table th {
+  padding: var(--space-sm) var(--space-md);
+  text-align: right;
+  font-weight: 600;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid var(--border-subtle);
+  background: rgba(255, 255, 255, 0.02);
+  position: sticky;
+  top: 0;
+  white-space: nowrap;
+}
+.stats-table th:first-child {
+  text-align: left;
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: var(--bg-card);
+}
+.stats-table td {
+  padding: var(--space-sm) var(--space-md);
+  text-align: right;
+  border-bottom: 1px solid var(--border-subtle);
+  font-variant-numeric: tabular-nums;
+}
+.stats-table td:first-child {
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-primary);
+  position: sticky;
+  left: 0;
+  background: var(--bg-card);
+  z-index: 1;
+  white-space: nowrap;
+}
+.stats-table tbody tr:hover td {
+  background: rgba(58, 134, 255, 0.06);
+}
+.stats-table tbody tr:hover td:first-child {
+  background: var(--bg-card-hover);
+}
+.stat-highlight {
+  color: var(--accent-gold) !important;
+  font-weight: 700 !important;
+}
+
+/* KPI 卡片 */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: var(--space-md);
+  margin-bottom: var(--space-xl);
+}
+.kpi-card {
+  background: var(--gradient-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  text-align: center;
+  transition: all var(--transition-base);
+}
+.kpi-card:hover {
+  border-color: var(--border-hover);
+  transform: translateY(-2px);
+}
+.kpi-value {
+  font-size: 1.8rem;
+  font-weight: 900;
+  background: var(--gradient-gold);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.kpi-label {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: var(--space-xs);
+}
+.kpi-sublabel {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+/* 圖表容器 */
+.chart-container {
+  background: var(--gradient-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  margin-bottom: var(--space-xl);
+}
+.chart-title {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: var(--space-md);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+.chart-subtitle {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  margin-bottom: var(--space-md);
+}
+.chart-svg {
+  width: 100%;
+  overflow: visible;
+}
+.chart-svg text {
+  fill: var(--text-secondary);
+  font-family: "Inter", "Noto Sans TC", sans-serif;
+}
+.chart-svg .axis-label {
+  fill: var(--text-muted);
+  font-size: 11px;
+}
+.chart-svg .tick text {
+  fill: var(--text-muted);
+  font-size: 10px;
+}
+.chart-svg .tick line,
+.chart-svg .domain {
+  stroke: var(--border-subtle);
+}
+.charts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+  gap: var(--space-lg);
+}
+
+/* Tooltip */
+.chart-tooltip {
+  position: fixed;
+  pointer-events: none;
+  background: rgba(26, 32, 53, 0.96);
+  border: 1px solid var(--border-hover);
+  border-radius: var(--radius-sm);
+  padding: var(--space-sm) var(--space-md);
+  font-size: 0.78rem;
+  color: var(--text-primary);
+  box-shadow: var(--shadow-elevated);
+  z-index: 1000;
+  backdrop-filter: blur(8px);
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+  max-width: 280px;
+  line-height: 1.5;
+}
+.chart-tooltip.visible {
+  opacity: 1;
+}
+.tooltip-title {
+  font-weight: 700;
+  color: var(--accent-gold);
+  margin-bottom: 4px;
+}
+.tooltip-row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-md);
+}
+.tooltip-label {
+  color: var(--text-muted);
+}
+.tooltip-value {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 控制項 */
+.controls-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+  flex-wrap: wrap;
+}
+.filter-select {
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.filter-select:focus {
+  outline: none;
+  border-color: var(--accent-gold);
+}
+.filter-label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+/* 球種圖例 */
+.pitch-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+}
+.pitch-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+}
+.pitch-legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+/* 載入動畫 */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  gap: var(--space-lg);
+}
+.loading-spinner {
+  width: 48px;
+  height: 48px;
+  border: 3px solid var(--border-subtle);
+  border-top-color: var(--accent-gold);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.loading-text {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+/* 響應式 */
+@media (max-width: 768px) {
+  .header-inner {
+    flex-direction: column;
+    gap: var(--space-md);
+  }
+  .tab-nav {
+    overflow-x: auto;
+    width: 100%;
+    justify-content: flex-start;
+  }
+  .tab-btn {
+    font-size: 0.78rem;
+    padding: var(--space-sm);
+  }
+  .main-content {
+    padding: var(--space-md) var(--space-sm);
+  }
+  .game-cards-grid {
+    grid-template-columns: 1fr;
+  }
+  .charts-grid {
+    grid-template-columns: 1fr;
+  }
+  .kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .section-title {
+    font-size: 1.2rem;
+  }
+}
+
+/* 頁尾 */
+.site-footer {
+  text-align: center;
+  padding: var(--space-2xl) var(--space-lg);
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  border-top: 1px solid var(--border-subtle);
+  margin-top: var(--space-3xl);
+}
+
+/* 兩欄佈局 */
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-lg);
+}
+@media (max-width: 900px) {
+  .two-col {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* 球種分布條 */
+.pitch-mix-bar {
+  display: flex;
+  height: 24px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  margin-bottom: var(--space-sm);
+}
+.pitch-mix-segment {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: #fff;
+  min-width: 20px;
+  transition: all var(--transition-base);
+}
+.pitch-mix-segment:hover {
+  filter: brightness(1.2);
+}
+
+/* 徽章 */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+.badge-win {
+  background: rgba(6, 214, 160, 0.15);
+  color: var(--accent-green);
+}
+.badge-loss {
+  background: rgba(230, 57, 70, 0.15);
+  color: var(--accent-red);
+}
+.badge-pending {
+  background: rgba(148, 163, 184, 0.15);
+  color: var(--text-secondary);
+}
