@@ -11,6 +11,7 @@
 // 全域狀態
 // ============================================================
 let allGamesData = null;  // 所有比賽原始資料
+let extendedData = null;  // 第 14 專案擴充之歷史與極端數據
 
 /** 追蹤各頁面是否已渲染（延遲渲染用） */
 const pageRendered = {
@@ -38,6 +39,43 @@ const TEAM_NAMES_ZH = {
   'Czechia': '捷克',
 };
 
+/**
+ * 渲染統一防呆空狀態 (Empty State)
+ * 供進階圖表資料不足或無資料時使用。
+ */
+function renderEmptyState(containerId, message = '目前樣本數不足，無法繪製此圖表') {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.innerHTML = `
+    <div class="empty-state">
+      <div class="icon">⚾</div>
+      <h3>無足夠數據</h3>
+      <p>${escapeHTML(message)}</p>
+    </div>
+  `;
+}
+
+// ============================================================
+// HTML 轉義工具函式（防止 XSS 注入）
+// ============================================================
+
+/**
+ * 將字串中的 HTML 特殊字元轉義，防止 XSS 注入
+ * 當我們使用 innerHTML 或模板字串組裝 HTML 時，
+ * 所有來自外部資料（CSV、API、使用者輸入）的動態值都應該先經過此函式
+ * @param {*} str - 要轉義的原始值（非字串會先被轉為字串）
+ * @returns {string} 轉義後的安全字串
+ */
+function escapeHTML(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 // ============================================================
 // Tab 導覽
 // ============================================================
@@ -61,6 +99,14 @@ function initTabNavigation() {
   });
 }
 
+/**
+ * 核心應用程式邏輯：負責頁面狀態管理、資料載入、以及各項 UI 元件的對接渲染。
+ */
+
+// ============================================================
+// 全域狀態與設定
+// ============================================================
+window.APP_VERSION = "2026.03.10"; // 用於資源載入的統一版本號，取代激進的 Date.now()
 /**
  * 延遲渲染：只在頁面首次可見時才渲染其內容
  * 這樣可以避免 D3 在隱藏容器中計算到寬度 0 的問題
@@ -92,6 +138,16 @@ function renderPageIfNeeded(pageId) {
 /** 渲染賽事總覽頁面 */
 function renderOverviewPage() {
   renderStandings();
+  
+  // 局數得分熱區 (Inning Scoring Patterns)
+  const scoringData = DataProcessor.computeInningScoringData(allGamesData, DataProcessor.TAIWAN_TEAM);
+  Charts.drawInningScoringBarChart('inning-scoring-chart', scoringData);
+
+  // 歷屆戰績進化圖 (DE-02)
+  if (extendedData && extendedData.history) {
+    Charts.drawHistoryEvolutionChart('history-evolution-chart', extendedData.history);
+  }
+
   renderGameCards();
 }
 
@@ -103,7 +159,7 @@ function renderStandings() {
 
   container.innerHTML = standings.map((s, i) => {
     const flag = TEAM_FLAGS[s.team] || '';
-    const nameZH = TEAM_NAMES_ZH[s.team] || s.team;
+    const nameZH = escapeHTML(TEAM_NAMES_ZH[s.team] || s.team);
     const isTaiwan = s.team === DataProcessor.TAIWAN_TEAM;
     const diff = s.runsScored - s.runsAllowed;
     const diffStr = diff > 0 ? `+${diff}` : `${diff}`;
@@ -136,10 +192,12 @@ function renderGameCards() {
     return rows.some(r => r['batting_team'] === DataProcessor.TAIWAN_TEAM || r['fielding_team'] === DataProcessor.TAIWAN_TEAM);
   });
 
-  container.innerHTML = taiwanGames.map(({ rows, meta }) => {
+  const renderData = taiwanGames.map(({ rows, meta }) => {
     const summary = DataProcessor.computeGameSummary(rows, meta);
-    if (!summary) return '';
+    return { rows, meta, summary };
+  }).filter(d => d.summary);
 
+  container.innerHTML = renderData.map(({ summary }) => {
     const { homeTeam, awayTeam, homeScore, awayScore, inningScores, date, label } = summary;
     const isTaiwanHome = homeTeam === DataProcessor.TAIWAN_TEAM;
     const taiwanScore = isTaiwanHome ? homeScore : awayScore;
@@ -149,53 +207,66 @@ function renderGameCards() {
 
     // 各局比分表格
     let inningHTML = '<table><tr><th></th>';
-    for (let i = 1; i <= 9; i++) inningHTML += `<th>${i}</th>`;
+    for (let i = 1; i <= summary.displayInnings; i++) inningHTML += `<th>${i}</th>`;
     inningHTML += '<th class="total-col">R</th></tr>';
 
     // 客隊
-    inningHTML += `<tr><td>${TEAM_FLAGS[awayTeam] || ''} ${TEAM_NAMES_ZH[awayTeam] || awayTeam}</td>`;
-    for (let i = 1; i <= 9; i++) {
-      const s = inningScores.away[i] || 0;
-      inningHTML += `<td class="${s > 0 ? 'score-highlight' : ''}">${s}</td>`;
+    inningHTML += `<tr><td>${TEAM_FLAGS[awayTeam] || ''} ${escapeHTML(TEAM_NAMES_ZH[awayTeam] || awayTeam)}</td>`;
+    for (let i = 1; i <= summary.displayInnings; i++) {
+      const s = inningScores.away[i];
+      const displayStr = s === undefined ? 0 : s;
+      const highlightCls = (typeof s === 'number' && s > 0) ? 'score-highlight' : (s === 'X' ? 'score-x' : '');
+      inningHTML += `<td class="${highlightCls}">${displayStr}</td>`;
     }
     inningHTML += `<td class="total-col">${awayScore}</td></tr>`;
 
     // 主隊
-    inningHTML += `<tr><td>${TEAM_FLAGS[homeTeam] || ''} ${TEAM_NAMES_ZH[homeTeam] || homeTeam}</td>`;
-    for (let i = 1; i <= 9; i++) {
-      const s = inningScores.home[i] || 0;
-      inningHTML += `<td class="${s > 0 ? 'score-highlight' : ''}">${s}</td>`;
+    inningHTML += `<tr><td>${TEAM_FLAGS[homeTeam] || ''} ${escapeHTML(TEAM_NAMES_ZH[homeTeam] || homeTeam)}</td>`;
+    for (let i = 1; i <= summary.displayInnings; i++) {
+      const s = inningScores.home[i];
+      const displayStr = s === undefined ? 0 : s;
+      const highlightCls = (typeof s === 'number' && s > 0) ? 'score-highlight' : (s === 'X' ? 'score-x' : '');
+      inningHTML += `<td class="${highlightCls}">${displayStr}</td>`;
     }
     inningHTML += `<td class="total-col">${homeScore}</td></tr></table>`;
 
     return `
       <div class="game-card ${isWin ? 'win' : 'loss'}">
         <div class="game-card-header">
-          <span>📅 ${date}</span>
+          <span>📅 ${escapeHTML(date)}</span>
           <span class="badge ${isWin ? 'badge-win' : 'badge-loss'}">${isWin ? '✓ 勝' : '✗ 敗'}</span>
         </div>
         <div class="game-card-body">
           <div class="game-score-row">
             <div class="team-info">
               <span class="team-flag">${TEAM_FLAGS[awayTeam] || ''}</span>
-              <span class="team-name ${awayTeam === DataProcessor.TAIWAN_TEAM ? 'highlight' : ''}">${TEAM_NAMES_ZH[awayTeam] || awayTeam}</span>
+              <span class="team-name ${awayTeam === DataProcessor.TAIWAN_TEAM ? 'highlight' : ''}">${escapeHTML(TEAM_NAMES_ZH[awayTeam] || awayTeam)}</span>
             </div>
             <span class="score-value ${awayScore > homeScore ? 'winner' : 'loser'}">${awayScore}</span>
           </div>
           <div class="game-score-row">
             <div class="team-info">
               <span class="team-flag">${TEAM_FLAGS[homeTeam] || ''}</span>
-              <span class="team-name ${homeTeam === DataProcessor.TAIWAN_TEAM ? 'highlight' : ''}">${TEAM_NAMES_ZH[homeTeam] || homeTeam}</span>
+              <span class="team-name ${homeTeam === DataProcessor.TAIWAN_TEAM ? 'highlight' : ''}">${escapeHTML(TEAM_NAMES_ZH[homeTeam] || homeTeam)}</span>
             </div>
             <span class="score-value ${homeScore > awayScore ? 'winner' : 'loser'}">${homeScore}</span>
           </div>
           <div class="inning-scores">${inningHTML}</div>
+          <div class="game-re24-container">
+            <h4>📈 台灣隊期望值(RE24)起伏變化</h4>
+            <div id="re24-chart-${summary.gameId}" class="game-re24-chart"></div>
+          </div>
         </div>
       </div>
     `;
   }).join('');
 
-
+  // 渲染 D3.js RE24 趨勢圖 (直接重用剛才算好的 summary)
+  renderData.forEach(({ summary }) => {
+    if (!summary.re24Timeline || summary.re24Timeline.length === 0) return;
+    const isWin = summary.homeTeam === DataProcessor.TAIWAN_TEAM ? summary.homeScore > summary.awayScore : summary.awayScore > summary.homeScore;
+    window.Charts.drawRE24WormChart(`re24-chart-${summary.gameId}`, summary.re24Timeline, isWin);
+  });
 }
 
 // ============================================================
@@ -211,8 +282,17 @@ function renderBattingPage() {
   renderBattingKPIs(cumStats);
   // 打者成績表
   renderBattingTable(cumStats);
-  // EV × LA 散布圖
-  renderBattingCharts();
+  // EV × LA 散布圖、wOBA 等
+  renderBattingCharts(cumStats);
+
+
+  // 兩好球逆境抗壓王 (Two-Strike Clutch Bar Chart)
+  const twoStrikeData = DataProcessor.computeTwoStrikeData(allGamesData, team);
+  Charts.drawTwoStrikeChart('two-strike-chart', twoStrikeData);
+
+  // 台灣隊的剋星與最愛 (Pitch Type Kryptonite Bar Chart)
+  const kData = DataProcessor.computeKryptoniteData(allGamesData, team);
+  Charts.drawKryptoniteChart('kryptonite-chart', kData);
 }
 
 /** 渲染打擊 KPI 卡片 */
@@ -260,20 +340,19 @@ function renderBattingTable(stats) {
 
   container.innerHTML = stats.map(b => `
     <tr>
-      <td>${b.name}</td>
+      <td>${escapeHTML(b.name)}</td>
       <td>${b.pa}</td>
       <td>${b.ab}</td>
       <td>${b.hits}</td>
-      <td>${b.doubles}</td>
-      <td>${b.triples}</td>
       <td>${b.hr}</td>
       <td>${b.rbi}</td>
-      <td>${b.bb}</td>
-      <td>${b.so}</td>
       <td class="${b.avg !== null && b.avg >= 0.300 ? 'stat-highlight' : ''}">${DataProcessor.fmtAvg(b.avg)}</td>
-      <td>${DataProcessor.fmtAvg(b.obp)}</td>
-      <td>${DataProcessor.fmtAvg(b.slg)}</td>
       <td class="${b.ops !== null && b.ops >= 0.800 ? 'stat-highlight' : ''}">${b.ops !== null ? b.ops.toFixed(3) : '—'}</td>
+      <td style="color:var(--accent-gold); font-weight:bold;">${b.wOBA !== null ? b.wOBA.toFixed(3) : '—'}</td>
+      <td>${b.bbRate !== null ? (b.bbRate * 100).toFixed(1) + '%' : '—'}</td>
+      <td>${b.kRate !== null ? (b.kRate * 100).toFixed(1) + '%' : '—'}</td>
+      <td>${b.whiffPct !== null ? (b.whiffPct * 100).toFixed(1) + '%' : '—'}</td>
+      <td>${b.sweetSpotPct !== null ? (b.sweetSpotPct * 100).toFixed(1) + '%' : '—'}</td>
       <td>${b.avgEV ? b.avgEV.toFixed(1) : '—'}</td>
       <td>${b.hardHitPct !== null ? (b.hardHitPct * 100).toFixed(0) + '%' : '—'}</td>
       <td>${b.ppa ? b.ppa.toFixed(1) : '—'}</td>
@@ -282,7 +361,7 @@ function renderBattingTable(stats) {
 }
 
 /** 渲染打擊視覺化圖表 */
-function renderBattingCharts() {
+function renderBattingCharts(cumStats) {
   const team = DataProcessor.TAIWAN_TEAM;
   // 收集所有比賽的擊球品質資料
   let allBattedBalls = [];
@@ -294,8 +373,35 @@ function renderBattingCharts() {
   Charts.drawEVxLAChart('ev-la-chart', allBattedBalls);
 
   // 仰角分類分布圖
-  const cumStats = DataProcessor.computeCumulativeBattingStats(allGamesData, team);
   Charts.drawLADistributionChart('la-distribution-chart', cumStats);
+
+  // wOBA 長條圖
+  Charts.drawWOBABarChart('woba-bar-chart', cumStats);
+
+  // 戰術流向圖 (Sankey Diagram)
+  const sankeyData = DataProcessor.computeSankeyData(allGamesData, team);
+  Charts.drawStrategySankeyChart('strategy-sankey-chart', sankeyData);
+
+  // 噴射落點圖 (Spray Chart)
+  Charts.drawSprayChartHexbin('spray-chart-hexbin', allBattedBalls);
+
+  // 英雄五圍雷達圖 (Hero Radar Chart)
+  const heroData = DataProcessor.computeHeroRadarStats(allGamesData, team);
+  Charts.drawHeroRadarChart('hero-radar-chart', heroData);
+
+
+  // 選球四象限圖
+  Charts.drawDisciplineScatterChart('discipline-scatter-chart', cumStats);
+
+  // 進階打線火力專題 (DE-03, DE-04)
+  if (extendedData) {
+    if (extendedData.extreme && extendedData.extreme.top_homeruns) {
+      Charts.drawMonsterHitsList('monster-hits-list', extendedData.extreme.top_homeruns);
+    }
+    if (extendedData.tactics && extendedData.tactics.rbi_source) {
+      Charts.drawRBISourceChart('rbi-source-chart', extendedData.tactics.rbi_source);
+    }
+  }
 }
 
 // ============================================================
@@ -316,6 +422,36 @@ function renderPitchingPage() {
   // 預設顯示第一位投手的圖表
   if (cumStats.length > 0) {
     renderPitcherCharts(cumStats[0]);
+  }
+
+  // 牛棚拆彈專家圓餅圖 (Reliever Crisis Donut)
+  try {
+    const rcData = DataProcessor.computeRelieverCrisisData(allGamesData, team);
+    if (!rcData || rcData.length === 0) throw new Error("無中繼投手危機處理數據");
+    Charts.drawRelieverCrisisChart('reliever-crisis-chart', rcData);
+  } catch(e) {
+    console.warn("牛棚拆彈專家圖表略過:", e.message);
+    renderEmptyState('reliever-crisis-chart', '本預賽尚無牛棚於得點圈危機登板之數據');
+  }
+
+  // 火球男儀表板 (Fireball Speedometer)
+  try {
+    const fbData = DataProcessor.computeFireballData(allGamesData, team);
+    if (!fbData || fbData.length === 0) throw new Error("無火球男相關投球數據");
+    Charts.drawFireballSpeedometer('fireball-speedometer', fbData);
+  } catch(e) {
+    console.warn("火球男儀表板略過:", e.message);
+    renderEmptyState('fireball-speedometer', '目前沒有達到火球標準的高速投球紀錄');
+  }
+
+  // 投手陣容專題 (DE-03, DE-04)
+  if (extendedData) {
+    if (extendedData.extreme && extendedData.extreme.top_fastballs) {
+      Charts.drawTopFastballsList('top-fastballs-list', extendedData.extreme.top_fastballs);
+    }
+    if (extendedData.tactics && extendedData.tactics.pitch_arsenal) {
+      Charts.drawTeamPitchArsenalChart('team-pitch-arsenal-chart', extendedData.tactics.pitch_arsenal);
+    }
   }
 }
 
@@ -361,23 +497,26 @@ function renderPitchingTable(stats) {
     const topTypes = Object.values(p.pitchTypes)
       .sort((a, b) => b.count - a.count)
       .slice(0, 3)
-      .map(t => `${t.name}`)
+      .map(t => `${escapeHTML(t.name)}`)
       .join(', ');
 
     return `
       <tr>
-        <td>${p.name}</td>
+        <td>${escapeHTML(p.name)}</td>
         <td>${p.ipDisplay}</td>
         <td>${p.pitchCount}</td>
+        <td style="color:var(--accent-gold); font-weight:bold;">${p.ra9 !== null ? p.ra9.toFixed(2) : '—'}</td>
+        <td style="color:var(--accent-gold); font-weight:bold;">${p.fip !== null ? p.fip.toFixed(2) : '—'}</td>
+        <td>${p.whip !== null ? p.whip.toFixed(2) : '—'}</td>
         <td>${p.strikeouts}</td>
         <td>${p.walksAllowed || 0}</td>
         <td>${p.hitsAllowed || 0}</td>
+        <td>${p.kRate !== null ? (p.kRate * 100).toFixed(1) + '%' : '—'}</td>
+        <td style="color:var(--accent-gold); font-weight:bold;">${p.cswPct !== null ? (p.cswPct * 100).toFixed(1) + '%' : '—'}</td>
         <td>${p.avgSpeed ? p.avgSpeed.toFixed(1) : '—'}</td>
-        <td>${p.maxSpeed ? p.maxSpeed.toFixed(1) : '—'}</td>
         <td>${p.strikePct ? (p.strikePct * 100).toFixed(1) + '%' : '—'}</td>
         <td>${p.pip ? p.pip.toFixed(1) : '—'}</td>
-        <td>${p.firstPitchStrikePct !== null ? (p.firstPitchStrikePct * 100).toFixed(0) + '%' : '—'}</td>
-        <td style="font-size:0.75rem;color:var(--text-secondary)">${topTypes}</td>
+        <td style="font-size:0.75rem;color:var(--text-secondary)">${topTypes}</td>  <!-- topTypes 已在 map 階段轉義 -->
       </tr>
     `;
   }).join('');
@@ -389,7 +528,7 @@ function renderPitcherSelector(stats) {
   if (!select) return;
 
   select.innerHTML = stats.map(p =>
-    `<option value="${p.id}">${p.name} (${p.pitchCount}球)</option>`
+    `<option value="${escapeHTML(p.id)}">${escapeHTML(p.name)} (${p.pitchCount}球)</option>`
   ).join('');
 
   select.addEventListener('change', () => {
@@ -399,26 +538,29 @@ function renderPitcherSelector(stats) {
 }
 
 /** 渲染選定投手的圖表 */
-function renderPitcherCharts(pitcher) {
+function renderPitcherCharts(pitcherStats) {
   // 更新投手名稱標題
   const nameEl = document.getElementById('selected-pitcher-name');
-  if (nameEl) nameEl.textContent = pitcher.name;
+  if (nameEl) nameEl.textContent = pitcherStats.name;
 
   // 球種分布條
   const mixContainer = document.getElementById('pitch-mix-container');
   if (mixContainer) {
     mixContainer.innerHTML = '';
-    Charts.renderPitchMixBar(mixContainer, pitcher.pitchTypes);
+    Charts.renderPitchMixBar(mixContainer, pitcherStats.pitchTypes);
   }
 
   // 投球位移圖
-  Charts.drawMovementChart('movement-chart', pitcher.pitchDetails, pitcher.name);
+  Charts.drawMovementChart('movement-chart', pitcherStats.pitchDetails, pitcherStats.name);
 
   // 好球帶進壘圖
-  Charts.drawStrikeZoneChart('strike-zone-chart', pitcher.pitchDetails);
+  Charts.drawStrikeZoneChart('strike-zone-chart', pitcherStats.pitchDetails);
+
+  // 新增 CSW% 圓環圖
+  Charts.drawCSWDonutChart('csw-donut-chart', pitcherStats);
 
   // 球種統計表
-  renderPitchTypeTable(pitcher);
+  renderPitchTypeTable(pitcherStats);
 }
 
 /** 渲染球種詳細統計表 */
@@ -432,7 +574,7 @@ function renderPitchTypeTable(pitcher) {
     <tr>
       <td>
         <span class="pitch-legend-dot" style="background:${DataProcessor.PITCH_COLOR_MAP[pt.code] || '#64748b'};display:inline-block;margin-right:6px"></span>
-        ${pt.name} (${pt.code})
+        ${escapeHTML(pt.name)} (${escapeHTML(pt.code)})
       </td>
       <td>${pt.count}</td>
       <td>${(pt.pct * 100).toFixed(1)}%</td>
@@ -494,7 +636,7 @@ function renderComparisonPage() {
     const avgPPA = DataProcessor.avg(battingStats.flatMap(b => b.pitchesPerPA));
 
     html += `<tr>
-      <td>${TEAM_FLAGS[opponent] || ''} vs ${TEAM_NAMES_ZH[opponent]}</td>
+      <td>${TEAM_FLAGS[opponent] || ''} vs ${escapeHTML(TEAM_NAMES_ZH[opponent])}</td>
       <td><span class="badge ${isWin ? 'badge-win' : 'badge-loss'}">${taiwanScore}-${oppScore}</span></td>
       <td>${totalHits}</td>
       <td>${totalHR}</td>
@@ -535,7 +677,7 @@ function renderComparisonPage() {
     const strikePct = totalPitches > 0 ? totalStrikes / totalPitches : 0;
 
     html += `<tr>
-      <td>${TEAM_FLAGS[opponent] || ''} vs ${TEAM_NAMES_ZH[opponent]}</td>
+      <td>${TEAM_FLAGS[opponent] || ''} vs ${escapeHTML(TEAM_NAMES_ZH[opponent])}</td>
       <td>${totalPitches}</td>
       <td>${totalK}</td>
       <td>${totalBB}</td>
@@ -548,67 +690,7 @@ function renderComparisonPage() {
 
   html += '</tbody></table></div>';
 
-  // 主審分析
-  html += '<div class="section-title" style="margin-top:var(--space-2xl)"><span class="icon">⚖️</span> 各場主審判決分析</div>';
-  html += '<div class="game-cards-grid">';
-
-  taiwanGames.forEach(({ rows, meta }) => {
-    const summary = DataProcessor.computeGameSummary(rows, meta);
-    const umpireData = DataProcessor.computeUmpireAnalysis(rows);
-    if (!summary || !umpireData) return;
-
-    const isTaiwanHome = summary.homeTeam === team;
-    const opponent = isTaiwanHome ? summary.awayTeam : summary.homeTeam;
-    const chartId = `umpire-chart-${meta.date.replace(/-/g, '')}`;
-
-    const favTW = umpireData.pitches.filter(p => {
-      const isTWBatting = p.battingTeam === team;
-      return (isTWBatting && p.isMissedStrike) || (!isTWBatting && p.isPhantomStrike);
-    }).length;
-    const againstTW = umpireData.pitches.filter(p => {
-      const isTWBatting = p.battingTeam === team;
-      return (isTWBatting && p.isPhantomStrike) || (!isTWBatting && p.isMissedStrike);
-    }).length;
-
-    html += `
-      <div class="card">
-        <div class="card-header">
-          <div>
-            <div class="card-title">${TEAM_FLAGS[opponent]} vs ${TEAM_NAMES_ZH[opponent]}</div>
-            <div class="card-subtitle">${meta.date}</div>
-          </div>
-        </div>
-        <div class="kpi-grid" style="grid-template-columns: repeat(3, 1fr);">
-          <div class="kpi-card">
-            <div class="kpi-value">${umpireData.correctPct !== null ? (umpireData.correctPct * 100).toFixed(1) + '%' : '—'}</div>
-            <div class="kpi-label">判決正確率</div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-value" style="background:linear-gradient(135deg,#e63946,#c1121f);-webkit-background-clip:text">${umpireData.phantomStrikes}</div>
-            <div class="kpi-label">幽靈好球</div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-value" style="background:linear-gradient(135deg,#f5c542,#e8a317);-webkit-background-clip:text">${umpireData.missedStrikes}</div>
-            <div class="kpi-label">漏判好球</div>
-          </div>
-        </div>
-        <div id="${chartId}" style="min-height:300px;"></div>
-      </div>
-    `;
-  });
-
-  html += '</div>';
-
   container.innerHTML = html;
-
-  // 渲染主審圖表（需在 DOM 更新後）
-  setTimeout(() => {
-    taiwanGames.forEach(({ rows, meta }) => {
-      const umpireData = DataProcessor.computeUmpireAnalysis(rows);
-      const chartId = `umpire-chart-${meta.date.replace(/-/g, '')}`;
-      Charts.drawUmpireChart(chartId, umpireData);
-    });
-  }, 100);
 }
 
 // ============================================================
@@ -621,8 +703,13 @@ async function initApp() {
   document.getElementById('app-content').style.display = 'none';
 
   try {
-    // 載入所有比賽資料
-    allGamesData = await DataProcessor.loadAllGames();
+    // 載入所有比賽逐球資料 以及 R預編譯進階資料
+    const [gamesData, extData] = await Promise.all([
+      DataProcessor.loadAllGames(),
+      DataProcessor.loadExtendedStats()
+    ]);
+    allGamesData = gamesData;
+    extendedData = extData;
 
     // 隱藏載入畫面，顯示主內容
     document.getElementById('loading').style.display = 'none';
@@ -639,7 +726,7 @@ async function initApp() {
     document.getElementById('loading').innerHTML = `
       <div style="color: var(--accent-red); text-align: center;">
         <p>❌ 資料載入失敗</p>
-        <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 8px;">${err.message}</p>
+        <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 8px;">${escapeHTML(err.message)}</p>
       </div>
     `;
     console.error('App init failed:', err);

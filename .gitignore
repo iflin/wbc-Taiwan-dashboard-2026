@@ -1,0 +1,5 @@
+node_modules/
+.DS_Store
+*.xlsx
+.gemini/
+data/wbc_extended_stats_demo*.webp

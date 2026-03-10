@@ -82,6 +82,36 @@
           </div>
         </div>
 
+        <!-- 局數得分熱區圖 -->
+        <div class="card" style="margin-bottom: var(--space-2xl)">
+          <div class="card-title">
+            📈 局數得分熱區 — Inning Scoring Patterns
+          </div>
+          <div class="chart-subtitle" style="margin-top: 4px">
+            台灣隊在各局的總得分與總失分狀況（雙向長條圖：上半為得分，下半為失分）
+          </div>
+          <div
+            id="inning-scoring-chart"
+            class="chart-height-sm"
+            style="margin-top: var(--space-md)"
+          ></div>
+        </div>
+
+        <!-- 歷屆戰績進化 (DE-02) -->
+        <div class="card" style="margin-bottom: var(--space-2xl)">
+          <div class="card-title">
+            ⏳ 經典賽歷屆表現走勢 — Historical Evolution (2006-2026)
+          </div>
+          <div class="chart-subtitle" style="margin-top: 4px">
+            台灣隊近六屆賽事的打線火力 (總得分) 與投手壓制力 (團隊防禦率) 進化軌跡
+          </div>
+          <div
+            id="history-evolution-chart"
+            class="chart-height-sm"
+            style="margin-top: var(--space-md)"
+          ></div>
+        </div>
+
         <!-- 各場比賽卡片 -->
         <div class="section-title">
           <span class="icon">📋</span> 台灣隊各場比賽
@@ -111,16 +141,15 @@
                   <th>PA</th>
                   <th>AB</th>
                   <th>H</th>
-                  <th>2B</th>
-                  <th>3B</th>
                   <th>HR</th>
                   <th>RBI</th>
-                  <th>BB</th>
-                  <th>SO</th>
                   <th>AVG</th>
-                  <th>OBP</th>
-                  <th>SLG</th>
                   <th>OPS</th>
+                  <th style="color: var(--accent-gold)">wOBA</th>
+                  <th>BB%</th>
+                  <th>K%</th>
+                  <th>Whiff%</th>
+                  <th>SwSp%</th>
                   <th>Avg EV</th>
                   <th>Hard%</th>
                   <th>P/PA</th>
@@ -131,8 +160,66 @@
           </div>
         </div>
 
+        <!-- 進階打線火力專題 (DE-03, DE-04) -->
+        <div class="charts-grid" style="margin-bottom: var(--space-xl);">
+          <div class="chart-container chart-full-width">
+            <div class="chart-title">
+              🌋 台灣打線怪力榜 — Monster Hits (Top 10 Exit Velo / Distance)
+            </div>
+            <div class="chart-subtitle">
+              本屆賽事台灣隊擊球距離最遠、最暴力的前 10 次猛烈擊球
+            </div>
+            <div id="monster-hits-list" style="margin-top: var(--space-md)"></div>
+          </div>
+          
+          <div class="chart-container chart-full-width">
+            <div class="chart-title">
+              🧩 團隊打點來源解構 — RBI Source Breakdown
+            </div>
+            <div class="chart-subtitle">
+              台灣隊各場得分的戰術構成：是誰把分數打回來的？用什麼方式？
+            </div>
+            <div id="rbi-source-chart" class="chart-height-md" style="margin-top: var(--space-md)"></div>
+          </div>
+        </div>
+
         <!-- 擊球品質圖表 -->
         <div class="charts-grid">
+          <div class="chart-container chart-full-width">
+            <div class="chart-title">
+              🌟 台灣英雄五圍雷達圖 — Hero Radar Chart
+            </div>
+            <div class="chart-subtitle">
+              將打者的核心能力化為五圍（安打、長打、選球、暴力、大心臟），找出我們的六邊形戰士！
+            </div>
+            <div
+              id="hero-radar-chart"
+              class="chart-height-md"
+              style="display: flex; flex-direction: column; align-items: center"
+            ></div>
+          </div>
+
+          <div class="chart-container chart-full-width">
+            <div class="chart-title">
+              🔥 逆境抗壓王 — Two-Strike Clutch Bar Chart
+            </div>
+            <div class="chart-subtitle">
+              對比「兩好球落後時」與「整體」的打擊率，這代表著打者在遭到投手逼到絕境時的纏鬥與應變能力。
+            </div>
+            <div id="two-strike-chart" class="chart-height-md"></div>
+          </div>
+
+          <div class="chart-container chart-full-width">
+            <div class="chart-title">
+              🎯 台灣隊的剋星與最愛 — Pitch Type Kryptonite
+            </div>
+            <div class="chart-subtitle">
+              洞察我國打者的罩門與強項。揭曉面對各種變化球系的打擊率與揮空率
+              (Whiff%)。
+            </div>
+            <div id="kryptonite-chart" class="chart-height-md"></div>
+          </div>
+
           <div class="chart-container">
             <div class="chart-title">
               📈 擊球品質散布圖 — Exit Velocity × Launch Angle
@@ -141,14 +228,47 @@
               每個點代表一次擊球進場，顏色依結果分類。金色區域為 Barrel
               Zone（最佳擊球品質）
             </div>
-            <div id="ev-la-chart" style="min-height: 400px"></div>
+            <div id="ev-la-chart" class="chart-height-md"></div>
           </div>
           <div class="chart-container">
             <div class="chart-title">📊 擊球仰角帶分布</div>
             <div class="chart-subtitle">
               各打者的滾地球(GB)、平飛球(LD)、飛球(FB)、內飛球(PU)比例
             </div>
-            <div id="la-distribution-chart" style="min-height: 400px"></div>
+            <div id="la-distribution-chart" class="chart-height-md"></div>
+          </div>
+          <div class="chart-container">
+            <div class="chart-title">🔥 綜合攻擊火力分佈 — wOBA Rankings</div>
+            <div class="chart-subtitle">
+              打者加權上壘率與聯盟平均的落差。數值越高火力越強
+            </div>
+            <div id="woba-bar-chart" class="chart-height-md"></div>
+          </div>
+          <div class="chart-container">
+            <div class="chart-title">🌊 戰術結果流向圖 — Strategy Sankey</div>
+            <div class="chart-subtitle">
+              無人出局上壘後，台灣隊各項攻勢策略對應的得分效益
+            </div>
+            <div id="strategy-sankey-chart" class="chart-height-md"></div>
+          </div>
+          <div class="chart-container">
+            <div class="chart-title">
+              🏟️ 球場擬真落點噴射圖 — Spray Chart Hexbin
+            </div>
+            <div class="chart-subtitle">
+              各打者的擊球落點分佈。Hexbin
+              的顏色代表區域擊球初速，六角形大小代表落點頻率
+            </div>
+            <div id="spray-chart-hexbin" class="chart-height-md"></div>
+          </div>
+          <div class="chart-container">
+            <div class="chart-title">
+              ⚖️ 選球紀律四象限圖 — Plate Discipline
+            </div>
+            <div class="chart-subtitle">
+              K% (三振率) vs BB% (保送率)。右下方(高BB/低K)為選球最佳區域
+            </div>
+            <div id="discipline-scatter-chart" class="chart-height-md"></div>
           </div>
         </div>
       </section>
@@ -162,6 +282,29 @@
         <!-- 投球 KPIs -->
         <div class="kpi-grid" id="pitching-kpis"></div>
 
+        <!-- 投手陣容專題 (DE-03, DE-04) -->
+        <div class="charts-grid" style="margin-bottom: var(--space-xl);">
+          <div class="chart-container chart-full-width">
+            <div class="chart-title">
+              ⚡ 狂飆火球排行榜 — Fireball Leaders (Top 10 Velocity)
+            </div>
+            <div class="chart-subtitle">
+              本屆賽事台灣投手投出的最快 10 顆極速火球
+            </div>
+            <div id="top-fastballs-list" style="margin-top: var(--space-md)"></div>
+          </div>
+
+          <div class="chart-container chart-full-width">
+            <div class="chart-title">
+              🎯 團隊武器庫總覽 — Team Pitch Arsenal
+            </div>
+            <div class="chart-subtitle">
+              台灣隊全體投手在整個賽事的球種使用比例配比
+            </div>
+            <div id="team-pitch-arsenal-chart" class="chart-height-md" style="margin-top: var(--space-md)"></div>
+          </div>
+        </div>
+
         <!-- 投手成績表 -->
         <div class="card" style="margin-bottom: var(--space-xl)">
           <div class="card-header">
@@ -174,14 +317,17 @@
                   <th>投手</th>
                   <th>IP</th>
                   <th>投球數</th>
+                  <th style="color: var(--accent-gold)">RA9</th>
+                  <th style="color: var(--accent-gold)">FIP</th>
+                  <th>WHIP</th>
                   <th>K</th>
                   <th>BB</th>
                   <th>H</th>
+                  <th>K%</th>
+                  <th style="color: var(--accent-gold)">CSW%</th>
                   <th>均速</th>
-                  <th>最快</th>
                   <th>好球%</th>
                   <th>P/IP</th>
-                  <th>首球K%</th>
                   <th>主要球種</th>
                 </tr>
               </thead>
@@ -242,12 +388,39 @@
             <div class="chart-subtitle">
               各球種在水平與垂直方向的位移差異，顏色依球種分類
             </div>
-            <div id="movement-chart" style="min-height: 400px"></div>
+            <div id="movement-chart" class="chart-height-md"></div>
           </div>
           <div class="chart-container">
             <div class="chart-title">📍 好球帶進壘圖 — Strike Zone</div>
             <div class="chart-subtitle">捕手視角，白框為好球帶邊界</div>
-            <div id="strike-zone-chart" style="min-height: 420px"></div>
+            <div id="strike-zone-chart" class="chart-height-lg"></div>
+          </div>
+          <div class="chart-container">
+            <div class="chart-title">
+              🎯 絕對壓制力 — CSW% (全稱為 Called Strikes + Whiffs)
+            </div>
+            <div class="chart-subtitle">
+              看錯好球與揮空所佔總投球的比例，大於 30% 為大聯盟極佳水準
+            </div>
+            <div id="csw-donut-chart" class="chart-height-sm"></div>
+          </div>
+          <div class="chart-container">
+            <div class="chart-title">
+              💣 牛棚拆彈圓餅圖 — Reliever Crisis Donut
+            </div>
+            <div class="chart-subtitle">
+              整體後援投手在「壘上有人」危機登板時，成功抓下出局數(拆彈成功)與被擊出安打/保送(失守)的比例與最佳拆彈手排行
+            </div>
+            <div id="reliever-crisis-chart" class="chart-height-md"></div>
+          </div>
+          <div class="chart-container chart-full-width">
+            <div class="chart-title">
+              🔥 火球排行榜計速器 — Fireball Speedometer
+            </div>
+            <div class="chart-subtitle">
+              本賽事台灣隊投手投出的最快 10 顆剛猛火球 (km/h)
+            </div>
+            <div id="fireball-speedometer" class="chart-height-sm"></div>
           </div>
         </div>
       </section>
@@ -261,14 +434,37 @@
     <!-- ========== 頁尾 ========== -->
     <footer class="site-footer">
       <p>WBC 2026 台灣隊預賽 C 組數據分析 ・ 資料來源：MLB Statcast</p>
-      <p style="margin-top: 4px">逐球資料最後更新：2026-03-07</p>
+      <p style="margin-top: 4px">逐球資料最後更新：2026-03-10</p>
     </footer>
 
     <!-- 應用程式腳本與第三方套件 -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
-    <script src="src/dataProcessor.js?v=3"></script>
-    <script src="src/charts.js?v=3"></script>
-    <script src="src/app.js?v=3"></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"
+      integrity="sha512-dfX5uYVXzyU8+KHqj8bjo7UkOdg18PaOtpa48djpNbZHwExddghZ+ZmzWT06R5v6NSk3ZUfsH6FNEDepLx9hPQ=="
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"
+      integrity="sha512-M7nHCiNUOwFt6Us3r8alutZLm9qMt4s9951uo8jqO4UwJ1hziseL6O3ndFyigx6+LREfZqnhHxYjKRJ8ZQ69DQ=="
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://unpkg.com/d3-sankey@0.12.3/dist/d3-sankey.min.js"
+      integrity="sha512-KK15oKpabNDaLpWinMtNfTqy/V7pzlc2FRG174PfASes7RRx6TAsua8HJdRTKo8+BLvPBKNIkL7kXWcz5HoqqA=="
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://d3js.org/d3-hexbin.v0.2.min.js"
+      integrity="sha512-4EBUP3zUTjy5FMcK/D3Yx+VTtpKb4j70e9QB7ZtgOAgPPyBtIcc8YYgWbVkDtwcou6bUr6SMQ/pfuzIvvVjTyw=="
+      crossorigin="anonymous"
+    ></script>
+    <script src="src/dataProcessor.js"></script>
+    <script src="src/charts/core.js"></script>
+    <script src="src/charts/gameCharts.js"></script>
+    <script src="src/charts/battingCharts.js"></script>
+    <script src="src/charts/pitchingCharts.js"></script>
+    <script src="src/charts/advancedCharts.js"></script>
+    <script src="src/charts/extendedCharts.js"></script>
+    <script src="src/app.js"></script>
   </body>
 </html>

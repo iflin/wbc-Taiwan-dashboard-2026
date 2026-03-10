@@ -1,0 +1,47 @@
+[
+  {
+    "file": "data/788120_ChineseTaipei_vs_Australia_pbp.csv",
+    "label": "ChineseTaipei vs Australia",
+    "date": "2026-03-05"
+  },
+  {
+    "file": "data/788115_Czechia_vs_Korea_pbp.csv",
+    "label": "Czechia vs Korea",
+    "date": "2026-03-05"
+  },
+  {
+    "file": "data/788116_Australia_vs_Czechia_pbp.csv",
+    "label": "Australia vs Czechia",
+    "date": "2026-03-06"
+  },
+  {
+    "file": "data/788114_Japan_vs_ChineseTaipei_pbp.csv",
+    "label": "Japan vs ChineseTaipei",
+    "date": "2026-03-06"
+  },
+  {
+    "file": "data/788117_ChineseTaipei_vs_Czechia_pbp.csv",
+    "label": "ChineseTaipei vs Czechia",
+    "date": "2026-03-07"
+  },
+  {
+    "file": "data/788118_Korea_vs_Japan_pbp.csv",
+    "label": "Korea vs Japan",
+    "date": "2026-03-07"
+  },
+  {
+    "file": "data/788113_ChineseTaipei_vs_Korea_pbp.csv",
+    "label": "ChineseTaipei vs Korea",
+    "date": "2026-03-08"
+  },
+  {
+    "file": "data/788109_Australia_vs_Japan_pbp.csv",
+    "label": "Australia vs Japan",
+    "date": "2026-03-08"
+  },
+  {
+    "file": "data/788112_Korea_vs_Australia_pbp.csv",
+    "label": "Korea vs Australia",
+    "date": "2026-03-09"
+  }
+]
